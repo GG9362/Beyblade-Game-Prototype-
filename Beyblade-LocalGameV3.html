@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyblade Ultimate Showdown</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 3px solid #667eea;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #ffff00;
+            font-size: 3em;
+            text-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+            animation: titleGlow 2s infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(255, 255, 0, 0.5); }
+            50% { text-shadow: 0 0 40px rgba(255, 255, 0, 0.8); }
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid #ffff00;
+            padding: 15px 30px;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button.large {
+            padding: 20px 40px;
+            font-size: 1.2em;
+        }
+
+        .stadium {
+            width: 100%;
+            height: 350px;
+            background: radial-gradient(circle at center, rgba(255,255,0,0.2) 0%, rgba(102,126,234,0.3) 40%, rgba(0,0,0,0.8) 100%);
+            border: 4px solid #667eea;
+            border-radius: 50%;
+            margin: 20px auto;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bey-slot {
+            text-align: center;
+            flex: 1;
+        }
+
+        .bey-avatar {
+            font-size: 7em;
+            animation: spin 3s linear infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 0, 0.6));
+        }
+
+        .bey-avatar.hit {
+            animation: shake 0.3s;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .bey-name {
+            color: #ffff00;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .stat-bar {
+            width: 100px;
+            height: 15px;
+            background: #333;
+            border: 1px solid #667eea;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00);
+            width: 100%;
+            transition: width 0.4s;
+        }
+
+        .stat-fill.stamina {
+            background: linear-gradient(90deg, #ff8800, #ffaa00);
+        }
+
+        .stat-fill.special {
+            background: linear-gradient(90deg, #ff00ff, #ffff00);
+        }
+
+        .stat-label {
+            position: absolute;
+            top: 0;
+            left: 3px;
+            font-size: 0.65em;
+            color: white;
+            font-weight: bold;
+        }
+
+        .battle-log {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            margin: 20px 0;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .player-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+            color: #000;
+            border: 2px solid #ffff00;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .action-btn.special {
+            background: linear-gradient(135deg, #ff00ff 0%, #ff6b00 100%);
+            grid-column: 1 / -1;
+        }
+
+        .action-btn.special:not(:disabled) {
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+        }
+
+        .action-btn.burst {
+            background: linear-gradient(135deg, #ffaa00 0%, #ff0000 100%);
+            grid-column: 1 / -1;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            border-color: #ffff00;
+        }
+
+        .card.selected {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .card-icon {
+            font-size: 3em;
+            margin: 10px 0;
+        }
+
+        .card-title {
+            font-weight: bold;
+            color: #ffff00;
+            margin: 10px 0;
+        }
+
+        .card-desc {
+            font-size: 0.8em;
+            color: #ddd;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .status-box {
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid #667eea;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .status-box h3 {
+            color: #ffff00;
+            margin-bottom: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+
+        .status-label {
+            color: #aaa;
+        }
+
+        .status-value {
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .text-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #667eea;
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+            margin: 10px;
+            width: 250px;
+        }
+
+        .text-input::placeholder {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>⭐ BEYBLADE ULTIMATE SHOWDOWN ⭐</h1>
+            <p style="color: #667eea; font-size: 1.1em;">LET IT RIP! 🔥</p>
+        </div>
+
+        <!-- MENU SCREEN -->
+        <div class="screen active center" id="menuScreen">
+            <h2 style="color: #667eea; margin: 30px 0;">CHOOSE YOUR MODE</h2>
+            
+            <div class="menu-grid" style="max-width: 500px; margin: 30px auto;">
+                <div class="card" onclick="game.startPvp()">
+                    <div class="card-icon">⚔️</div>
+                    <div class="card-title">PVP</div>
+                    <div class="card-desc">Battle with a friend</div>
+                </div>
+                <div class="card" onclick="game.startStory()">
+                    <div class="card-icon">📖</div>
+                    <div class="card-title">STORY</div>
+                    <div class="card-desc">Battle AI opponents</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETUP SCREEN -->
+        <div class="screen center" id="setupScreen">
+            <h2 style="color: #667eea; margin: 30px 0;">ENTER PLAYER NAMES</h2>
+            
+            <input type="text" class="text-input" id="player1NameInput" placeholder="Player 1 Name" maxlength="15">
+            <input type="text" class="text-input" id="player2NameInput" placeholder="Player 2 Name" maxlength="15">
+            
+            <button class="button large" onclick="game.proceedToSelection()">CONTINUE</button>
+            <button class="button large" onclick="game.showMenu()" style="background: #666;">BACK</button>
+        </div>
+
+        <!-- BEY SELECTION SCREEN -->
+        <div class="screen center" id="selectionScreen">
+            <h2 style="color: #667eea; margin: 30px 0;" id="selectionTitle"></h2>
+            
+            <div class="menu-grid" id="beyGrid">
+                <!-- Filled by JS -->
+            </div>
+            
+            <button class="button large" id="startBtn" onclick="game.startBattle()" disabled>START BATTLE</button>
+            <button class="button large" onclick="game.showMenu()" style="background: #666;">BACK</button>
+        </div>
+
+        <!-- BATTLE SCREEN -->
+        <div class="screen" id="battleScreen">
+            <div style="text-align: center; margin: 20px 0;">
+                <div id="countdownBox" style="display: none;">
+                    <p style="color: #fff; font-size: 1.2em;">Battle Starts In...</p>
+                    <div style="font-size: 3em; color: #ffff00; font-weight: bold;" id="countdown">3</div>
+                </div>
+            </div>
+
+            <div class="stadium">
+                <div class="bey-slot">
+                    <div class="bey-avatar" id="p1Avatar"></div>
+                    <div class="bey-name" id="p1Name"></div>
+                    <div class="stat-row">
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="p1Hp" style="width: 100%;"></div>
+                            <div class="stat-label">HP</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill stamina" id="p1Stamina" style="width: 100%;"></div>
+                            <div class="stat-label">STA</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill special" id="p1Special" style="width: 0%;"></div>
+                            <div class="stat-label">SP</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bey-slot">
+                    <div class="bey-avatar" id="p2Avatar"></div>
+                    <div class="bey-name" id="p2Name"></div>
+                    <div class="stat-row">
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="p2Hp" style="width: 100%;"></div>
+                            <div class="stat-label">HP</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill stamina" id="p2Stamina" style="width: 100%;"></div>
+                            <div class="stat-label">STA</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill special" id="p2Special" style="width: 0%;"></div>
+                            <div class="stat-label">SP</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-grid">
+                <div class="status-box">
+                    <h3 id="p1StatusName"></h3>
+                    <div class="status-item"><span class="status-label">HP:</span><span class="status-value" id="p1HpText">100/100</span></div>
+                    <div class="status-item"><span class="status-label">Stamina:</span><span class="status-value" id="p1StaText">100/100</span></div>
+                    <div class="status-item"><span class="status-label">Special:</span><span class="status-value" id="p1SpText">0%</span></div>
+                </div>
+                <div class="status-box">
+                    <h3 id="p2StatusName"></h3>
+                    <div class="status-item"><span class="status-label">HP:</span><span class="status-value" id="p2HpText">100/100</span></div>
+                    <div class="status-item"><span class="status-label">Stamina:</span><span class="status-value" id="p2StaText">100/100</span></div>
+                    <div class="status-item"><span class="status-label">Special:</span><span class="status-value" id="p2SpText">0%</span></div>
+                </div>
+            </div>
+
+            <div class="battle-log" id="battleLog"></div>
+
+            <div class="controls">
+                <div class="player-controls">
+                    <button class="action-btn" id="p1A1" onclick="game.attack(1, 1)">🔨 ATTACK 1</button>
+                    <button class="action-btn" id="p1A2" onclick="game.attack(1, 2)">⚡ ATTACK 2</button>
+                    <button class="action-btn special" id="p1Special" onclick="game.special(1)">✨ SPECIAL ✨</button>
+                    <button class="action-btn burst" id="p1Burst" onclick="game.burst(1)">💥 BURST 💥</button>
+                </div>
+                <div class="player-controls">
+                    <button class="action-btn" id="p2A1" onclick="game.attack(2, 1)">🔨 ATTACK 1</button>
+                    <button class="action-btn" id="p2A2" onclick="game.attack(2, 2)">⚡ ATTACK 2</button>
+                    <button class="action-btn special" id="p2Special" onclick="game.special(2)">✨ SPECIAL ✨</button>
+                    <button class="action-btn burst" id="p2Burst" onclick="game.burst(2)">💥 BURST 💥</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- END SCREEN -->
+        <div class="screen center" id="endScreen">
+            <h1 style="color: #ffff00; font-size: 2.5em; margin: 40px 0;" id="winnerText">PLAYER 1 WINS!</h1>
+            <p style="color: #00ff00; font-size: 1.2em; margin: 20px 0;" id="resultText"></p>
+            
+            <button class="button large" onclick="game.showMenu()">BACK TO MENU</button>
+            <button class="button large" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const BEYBLADES = {
+            spryzen: { name: 'Spryzen', icon: '🌪️', hp: 100, stamina: 100, attacks: [12, 18], special: 40, burst: 50 },
+            valtrak: { name: 'Valtrak', icon: '⚡', hp: 95, stamina: 95, attacks: [14, 20], special: 45, burst: 55 },
+            fafnir: { name: 'Fafnir', icon: '🐉', hp: 110, stamina: 120, attacks: [16, 22], special: 48, burst: 58 },
+            phoenix: { name: 'Phoenix', icon: '🔥', hp: 100, stamina: 105, attacks: [15, 19], special: 42, burst: 52 },
+            apocalypse: { name: 'Prime Apocalypse', icon: '💀', hp: 105, stamina: 100, attacks: [18, 24], special: 50, burst: 62 }
+        };
+
+        const STORY_OPPONENTS = [
+            { name: 'Rookie', bey: 'spryzen' },
+            { name: 'Veteran', bey: 'valtrak' },
+            { name: 'Expert', bey: 'fafnir' },
+            { name: 'Master', bey: 'phoenix' },
+            { name: 'Champion', bey: 'apocalypse' }
+        ];
+
+        const game = {
+            mode: null,
+            player1Name: '',
+            player2Name: '',
+            player1Bey: null,
+            player2Bey: null,
+            storyBattle: 0,
+            isAI: false,
+
+            p1HP: 0, p2HP: 0,
+            p1MaxHP: 0, p2MaxHP: 0,
+            p1Stamina: 0, p2Stamina: 0,
+            p1MaxStamina: 0, p2MaxStamina: 0,
+            p1Special: 0, p2Special: 0,
+            p1SpecialCD: 0, p2SpecialCD: 0,
+            p1BurstCD: 0, p2BurstCD: 0,
+
+            gameActive: false,
+
+            showScreen(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+
+            showMenu() {
+                this.showScreen('menuScreen');
+            },
+
+            startPvp() {
+                this.mode = 'pvp';
+                this.isAI = false;
+                this.showScreen('setupScreen');
+            },
+
+            startStory() {
+                this.mode = 'story';
+                this.isAI = true;
+                this.storyBattle = 0;
+                this.player1Name = 'You';
+                this.proceedToSelection();
+            },
+
+            proceedToSelection() {
+                if (this.mode === 'pvp') {
+                    this.player1Name = document.getElementById('player1NameInput').value || 'Player 1';
+                    this.player2Name = document.getElementById('player2NameInput').value || 'Player 2';
+                    document.getElementById('selectionTitle').textContent = 'SELECT YOUR BEYBLADES';
+                } else {
+                    document.getElementById('selectionTitle').textContent = 'SELECT YOUR BEYBLADES';
+                }
+
+                this.populateBeySelection();
+                this.showScreen('selectionScreen');
+            },
+
+            populateBeySelection() {
+                const grid = document.getElementById('beyGrid');
+                grid.innerHTML = '';
+
+                Object.keys(BEYBLADES).forEach(key => {
+                    const bey = BEYBLADES[key];
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `<div class="card-icon">${bey.icon}</div><div class="card-title">${bey.name}</div><div class="card-desc">HP: ${bey.hp}</div>`;
+                    card.onclick = () => this.selectBey(key, card);
+                    grid.appendChild(card);
+                });
+            },
+
+            selectBey(key, element) {
+                document.querySelectorAll('#beyGrid .card').forEach(c => c.classList.remove('selected'));
+                element.classList.add('selected');
+                
+                if (!this.player1Bey) {
+                    this.player1Bey = key;
+                } else if (!this.player2Bey) {
+                    this.player2Bey = key;
+                    document.getElementById('startBtn').disabled = false;
+                }
+            },
+
+            startBattle() {
+                if (this.isAI) {
+                    this.player2Name = STORY_OPPONENTS[this.storyBattle].name;
+                    this.player2Bey = STORY_OPPONENTS[this.storyBattle].bey;
+                }
+
+                const p1Data = BEYBLADES[this.player1Bey];
+                const p2Data = BEYBLADES[this.player2Bey];
+
+                this.p1MaxHP = this.p1HP = p1Data.hp;
+                this.p2MaxHP = this.p2HP = p2Data.hp;
+                this.p1MaxStamina = this.p1Stamina = p1Data.stamina;
+                this.p2MaxStamina = this.p2Stamina = p2Data.stamina;
+                this.p1Special = this.p2Special = 0;
+                this.p1SpecialCD = this.p2SpecialCD = 0;
+                this.p1BurstCD = this.p2BurstCD = 0;
+
+                document.getElementById('p1Name').textContent = this.player1Name;
+                document.getElementById('p2Name').textContent = this.player2Name;
+                document.getElementById('p1Avatar').textContent = p1Data.icon;
+                document.getElementById('p2Avatar').textContent = p2Data.icon;
+                document.getElementById('p1StatusName').textContent = this.player1Name;
+                document.getElementById('p2StatusName').textContent = this.player2Name;
+
+                this.clearLog();
+                this.addLog(`⚔️ ${this.player1Name} vs ${this.player2Name}`);
+                this.showScreen('battleScreen');
+                this.updateUI();
+                this.startCountdown();
+            },
+
+            startCountdown() {
+                document.getElementById('countdownBox').style.display = 'block';
+                let count = 3;
+                const interval = setInterval(() => {
+                    document.getElementById('countdown').textContent = count;
+                    count--;
+                    if (count < 0) {
+                        clearInterval(interval);
+                        document.getElementById('countdownBox').style.display = 'none';
+                        this.addLog('🚀 LET IT RIP!');
+                        this.gameActive = true;
+                        this.gameLoop();
+                    }
+                }, 1000);
+            },
+
+            gameLoop() {
+                setInterval(() => {
+                    if (!this.gameActive) return;
+
+                    this.p1Stamina = Math.min(this.p1MaxStamina, this.p1Stamina + 10);
+                    this.p2Stamina = Math.min(this.p2MaxStamina, this.p2Stamina + 10);
+                    this.p1Special = Math.min(100, this.p1Special + 5);
+                    this.p2Special = Math.min(100, this.p2Special + 5);
+
+                    if (this.p1SpecialCD > 0) this.p1SpecialCD--;
+                    if (this.p2SpecialCD > 0) this.p2SpecialCD--;
+                    if (this.p1BurstCD > 0) this.p1BurstCD--;
+                    if (this.p2BurstCD > 0) this.p2BurstCD--;
+
+                    if (this.isAI && Math.random() > 0.6) {
+                        const r = Math.random();
+                        if (r > 0.7 && this.p2Special >= 80 && this.p2SpecialCD === 0) {
+                            this.special(2);
+                        } else if (r > 0.5) {
+                            this.attack(2, Math.floor(Math.random() * 2) + 1);
+                        }
+                    }
+
+                    this.updateUI();
+                }, 1000);
+            },
+
+            attack(player, num) {
+                if (!this.gameActive) return;
+                const enemy = player === 1 ? 2 : 1;
+                const beyData = BEYBLADES[player === 1 ? this.player1Bey : this.player2Bey];
+                const damage = beyData.attacks[num - 1] + Math.floor(Math.random() * 8) - 4;
+
+                if (player === 1) {
+                    if (this.p1Stamina < 20) { this.addLog('❌ Not enough stamina!'); return; }
+                    this.p1Stamina -= 20;
+                    this.p2HP -= damage;
+                    this.p1Special += 15;
+                } else {
+                    if (this.p2Stamina < 20) return;
+                    this.p2Stamina -= 20;
+                    this.p1HP -= damage;
+                    this.p2Special += 15;
+                }
+
+                this.addLog(`⚡ Player ${player} attacks! ${Math.ceil(damage)} damage!`);
+                this.animateHit(enemy);
+                this.checkEnd();
+            },
+
+            special(player) {
+                if (!this.gameActive) return;
+                const enemy = player === 1 ? 2 : 1;
+                const beyData = BEYBLADES[player === 1 ? this.player1Bey : this.player2Bey];
+
+                if (player === 1) {
+                    if (this.p1Special < 80 || this.p1SpecialCD > 0) return;
+                    this.p1Special = 0;
+                    this.p1SpecialCD = 3;
+                    this.p2HP -= beyData.special;
+                } else {
+                    if (this.p2Special < 80 || this.p2SpecialCD > 0) return;
+                    this.p2Special = 0;
+                    this.p2SpecialCD = 3;
+                    this.p1HP -= beyData.special;
+                }
+
+                this.addLog(`✨ Player ${player} uses SPECIAL ATTACK! ${beyData.special} damage!`);
+                this.animateHit(enemy);
+                this.checkEnd();
+            },
+
+            burst(player) {
+                if (!this.gameActive) return;
+                const enemy = player === 1 ? 2 : 1;
+                const beyData = BEYBLADES[player === 1 ? this.player1Bey : this.player2Bey];
+
+                if (player === 1) {
+                    if (this.p1BurstCD > 0) return;
+                    this.p1BurstCD = 4;
+                    this.p2HP -= beyData.burst;
+                } else {
+                    if (this.p2BurstCD > 0) return;
+                    this.p2BurstCD = 4;
+                    this.p1HP -= beyData.burst;
+                }
+
+                this.addLog(`💥 Player ${player} uses BURST FINISH! ${beyData.burst} damage!`);
+                this.animateHit(enemy);
+                this.checkEnd();
+            },
+
+            animateHit(player) {
+                const id = player === 1 ? 'p1Avatar' : 'p2Avatar';
+                const el = document.getElementById(id);
+                el.classList.remove('hit');
+                void el.offsetWidth;
+                el.classList.add('hit');
+            },
+
+            checkEnd() {
+                if (this.p1HP <= 0) {
+                    this.endBattle(2);
+                } else if (this.p2HP <= 0) {
+                    this.endBattle(1);
+                }
+            },
+
+            endBattle(winner) {
+                this.gameActive = false;
+                document.getElementById('winnerText').textContent = `${winner === 1 ? this.player1Name : this.player2Name} WINS!`;
+                document.getElementById('resultText').textContent = 'Victory! Great battle!';
+                
+                if (this.isAI && winner === 1 && this.storyBattle < STORY_OPPONENTS.length - 1) {
+                    this.storyBattle++;
+                    document.getElementById('resultText').textContent += ` Next opponent: ${STORY_OPPONENTS[this.storyBattle].name}`;
+                    setTimeout(() => {
+                        this.startBattle();
+                    }, 3000);
+                    this.showScreen('endScreen');
+                } else {
+                    this.showScreen('endScreen');
+                }
+            },
+
+            updateUI() {
+                document.getElementById('p1Hp').style.width = (this.p1HP / this.p1MaxHP * 100) + '%';
+                document.getElementById('p2Hp').style.width = (this.p2HP / this.p2MaxHP * 100) + '%';
+                document.getElementById('p1Stamina').style.width = (this.p1Stamina / this.p1MaxStamina * 100) + '%';
+                document.getElementById('p2Stamina').style.width = (this.p2Stamina / this.p2MaxStamina * 100) + '%';
+                document.getElementById('p1Special').style.width = this.p1Special + '%';
+                document.getElementById('p2Special').style.width = this.p2Special + '%';
+
+                document.getElementById('p1HpText').textContent = `${Math.ceil(this.p1HP)}/${this.p1MaxHP}`;
+                document.getElementById('p2HpText').textContent = `${Math.ceil(this.p2HP)}/${this.p2MaxHP}`;
+                document.getElementById('p1StaText').textContent = `${Math.ceil(this.p1Stamina)}/${this.p1MaxStamina}`;
+                document.getElementById('p2StaText').textContent = `${Math.ceil(this.p2Stamina)}/${this.p2MaxStamina}`;
+                document.getElementById('p1SpText').textContent = Math.ceil(this.p1Special) + '%';
+                document.getElementById('p2SpText').textContent = Math.ceil(this.p2Special) + '%';
+
+                document.getElementById('p1A1').disabled = this.p1Stamina < 20 || !this.gameActive;
+                document.getElementById('p1A2').disabled = this.p1Stamina < 20 || !this.gameActive;
+                document.getElementById('p1Special').disabled = this.p1Special < 80 || this.p1SpecialCD > 0 || !this.gameActive;
+                document.getElementById('p1Burst').disabled = this.p1BurstCD > 0 || !this.gameActive;
+
+                document.getElementById('p2A1').disabled = this.p2Stamina < 20 || !this.gameActive;
+                document.getElementById('p2A2').disabled = this.p2Stamina < 20 || !this.gameActive;
+                document.getElementById('p2Special').disabled = this.p2Special < 80 || this.p2SpecialCD > 0 || !this.gameActive;
+                document.getElementById('p2Burst').disabled = this.p2BurstCD > 0 || !this.gameActive;
+            },
+
+            clearLog() {
+                document.getElementById('battleLog').innerHTML = '';
+            },
+
+            addLog(msg) {
+                const log = document.getElementById('battleLog');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = msg;
+                log.appendChild(entry);
+                log.scrollTop = log.scrollHeight;
+            }
+        };
+    </script>
+</body>
+</html>
